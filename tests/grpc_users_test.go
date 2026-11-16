@@ -143,7 +143,7 @@ func TestGRPCUpdateUser(t *testing.T) {
 }
 
 func TestGRPCGetUserMe(t *testing.T) {
-    userRequest := &v1.CreateUserRequest{
+	userRequest := &v1.CreateUserRequest{
 		Email:      gofakeit.Email(),
 		Password:   gofakeit.Password(true, true, true, true, false, 12),
 		LastName:   gofakeit.LastName(),
@@ -202,7 +202,7 @@ func TestGRPCGetUserMe(t *testing.T) {
 	)
 
 	response, err := usersClient.GetMe(
-		contextWithToken,&v1.Empty{},
+		contextWithToken, &v1.Empty{},
 	)
 
 	require.NoError(t, err)

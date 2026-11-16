@@ -147,7 +147,6 @@ func TestHTTPUpdateUser(t *testing.T) {
 	t.Logf("updated user with ID %s", result.User.ID)
 }
 
-
 func TestHTTPGetUserMe(t *testing.T) {
 	userRequest := createUserRequest{
 		Email:      gofakeit.Email(),
