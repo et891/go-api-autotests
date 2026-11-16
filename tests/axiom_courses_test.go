@@ -12,13 +12,22 @@ type axiomCourse struct {
 	Published bool
 }
 
+var coursesRunner = testRunner.Join(
+	axiom.NewRunner(
+		axiom.WithRunnerMeta(
+			axiom.WithMetaTag("courses"),
+		),
+	),
+)
+
 func TestAxiomCreateCourse(t *testing.T) {
-	testRunner := axiom.NewRunner()
 	testCase := axiom.NewCase(
 		axiom.WithCaseName("course can be created"),
-	)
+		axiom.WithCaseMeta(
+			axiom.WithMetaTag("create"),
+		))
 
-	testRunner.RunCase(t, testCase, func(cfg *axiom.Config) {
+	coursesRunner.RunCase(t, testCase, func(cfg *axiom.Config) {
 		expectedTitle := "Go API Autotests"
 
 		course := axiomCourse{
@@ -28,16 +37,22 @@ func TestAxiomCreateCourse(t *testing.T) {
 
 		assert.Equal(cfg.T(), expectedTitle, course.Title)
 		assert.False(cfg.T(), course.Published)
+		assert.Equal(
+			cfg.T(),
+			[]string{"axiom", "courses", "create"},
+			cfg.Meta.Tags,
+		)
 	})
 }
 
 func TestAxiomPublishCourse(t *testing.T) {
-	testRunner := axiom.NewRunner()
 	testCase := axiom.NewCase(
 		axiom.WithCaseName("course can be published"),
-	)
+		axiom.WithCaseMeta(
+			axiom.WithMetaTag("publish"),
+		))
 
-	testRunner.RunCase(t, testCase, func(cfg *axiom.Config) {
+	coursesRunner.RunCase(t, testCase, func(cfg *axiom.Config) {
 		expectedTitle := "Go API Autotests"
 
 		course := axiomCourse{
@@ -48,5 +63,10 @@ func TestAxiomPublishCourse(t *testing.T) {
 		course.Published = true
 
 		assert.True(cfg.T(), course.Published)
+		assert.Equal(
+			cfg.T(),
+			[]string{"axiom", "courses", "publish"},
+			cfg.Meta.Tags,
+		)
 	})
 }
