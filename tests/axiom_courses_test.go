@@ -35,32 +35,46 @@ func (s *AxiomSuite) TestCourseCanBeCreated() {
 		))
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
-		assert.Equal(cfg.T(), "Learning platform", cfg.Meta.Epic)
-		assert.Equal(cfg.T(), "Courses", cfg.Meta.Feature)
-		assert.Equal(cfg.T(), "Create course", cfg.Meta.Story)
-		assert.Equal(cfg.T(), axiom.SeverityCritical, cfg.Meta.Severity)
-		expectedTitle := "Go API Autotests"
-
-		course := axiomCourse{
-			Title:     expectedTitle,
-			Published: false,
-		}
-
-		assert.Equal(cfg.T(), expectedTitle, course.Title)
-		assert.False(cfg.T(), course.Published)
-		assert.Equal(
-			cfg.T(),
-			[]string{"axiom", "courses", "create", "smoke"},
-			cfg.Meta.Tags,
+		var (
+			expectedTitle string
+			course        axiomCourse
 		)
-		assert.Equal(cfg.T(), []string{"AXIOM-201"}, cfg.Meta.Issues)
-		assert.Equal(cfg.T(), []string{"COURSES-001"}, cfg.Meta.TestCases)
+		cfg.Setup("prepare course data", func() {
+			expectedTitle = "Go API Autotests"
+		})
 
-		expectedLabels := map[string]string{
-			"owner":     "courses-team",
-			"component": "courses-service",
-		}
-		assert.Equal(cfg.T(), expectedLabels, cfg.Meta.Labels)
+		cfg.Step("check test metadata", func() {
+			assert.Equal(cfg.T(), "Learning platform", cfg.Meta.Epic)
+			assert.Equal(cfg.T(), "Courses", cfg.Meta.Feature)
+			assert.Equal(cfg.T(), "Create course", cfg.Meta.Story)
+			assert.Equal(cfg.T(), axiom.SeverityCritical, cfg.Meta.Severity)
+			assert.Equal(
+				cfg.T(),
+				[]string{"axiom", "courses", "create", "smoke"},
+				cfg.Meta.Tags,
+			)
+			assert.Equal(cfg.T(), []string{"AXIOM-201"}, cfg.Meta.Issues)
+			assert.Equal(cfg.T(), []string{"COURSES-001"}, cfg.Meta.TestCases)
+
+			expectedLabels := map[string]string{
+				"owner":     "courses-team",
+				"component": "courses-service",
+			}
+			assert.Equal(cfg.T(), expectedLabels, cfg.Meta.Labels)
+		})
+		cfg.Step("create course", func() {
+			course = axiomCourse{
+				Title:     expectedTitle,
+				Published: false,
+			}
+		})
+		cfg.Step("check created course", func() {
+			assert.Equal(cfg.T(), expectedTitle, course.Title)
+			assert.False(cfg.T(), course.Published)
+		})
+		defer cfg.Teardown("clear course data", func() {
+			course = axiomCourse{}
+		})
 	})
 }
 
@@ -75,32 +89,42 @@ func (s *AxiomSuite) TestCourseCanBePublished() {
 		))
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
-		assert.Equal(cfg.T(), "Learning platform", cfg.Meta.Epic)
-		assert.Equal(cfg.T(), "Courses", cfg.Meta.Feature)
-		assert.Equal(cfg.T(), "Publish course", cfg.Meta.Story)
-		assert.Equal(cfg.T(), axiom.SeverityNormal, cfg.Meta.Severity)
-		expectedTitle := "Go API Autotests"
+		var course axiomCourse
+		cfg.Setup("prepare unpublished course", func() {
+			expectedTitle := "Go API Autotests"
+			course = axiomCourse{
+				Title:     expectedTitle,
+				Published: false,
+			}
+		})
+		cfg.Step("check test metadata", func() {
+			assert.Equal(cfg.T(), "Learning platform", cfg.Meta.Epic)
+			assert.Equal(cfg.T(), "Courses", cfg.Meta.Feature)
+			assert.Equal(cfg.T(), "Publish course", cfg.Meta.Story)
+			assert.Equal(cfg.T(), axiom.SeverityNormal, cfg.Meta.Severity)
+			assert.Equal(
+				cfg.T(),
+				[]string{"axiom", "courses", "publish", "regression"},
+				cfg.Meta.Tags,
+			)
+			assert.Equal(cfg.T(), []string{"AXIOM-202"}, cfg.Meta.Issues)
+			assert.Equal(cfg.T(), []string{"COURSES-002"}, cfg.Meta.TestCases)
 
-		course := axiomCourse{
-			Title:     expectedTitle,
-			Published: false,
-		}
+			expectedLabels := map[string]string{
+				"owner":     "courses-team",
+				"component": "courses-service",
+			}
+			assert.Equal(cfg.T(), expectedLabels, cfg.Meta.Labels)
+		})
 
-		course.Published = true
-
-		assert.True(cfg.T(), course.Published)
-		assert.Equal(
-			cfg.T(),
-			[]string{"axiom", "courses", "publish", "regression"},
-			cfg.Meta.Tags,
-		)
-		assert.Equal(cfg.T(), []string{"AXIOM-202"}, cfg.Meta.Issues)
-		assert.Equal(cfg.T(), []string{"COURSES-002"}, cfg.Meta.TestCases)
-
-		expectedLabels := map[string]string{
-			"owner":     "courses-team",
-			"component": "courses-service",
-		}
-		assert.Equal(cfg.T(), expectedLabels, cfg.Meta.Labels)
+		cfg.Step("publish course", func() {
+			course.Published = true
+		})
+		cfg.Step("check published course", func() {
+			assert.True(cfg.T(), course.Published)
+		})
+		defer cfg.Teardown("clear course data", func() {
+			course = axiomCourse{}
+		})
 	})
 }
