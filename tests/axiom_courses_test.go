@@ -20,6 +20,9 @@ var coursesRunner = testRunner.Join(
 			axiom.WithMetaLabel("owner", "courses-team"),
 			axiom.WithMetaLabel("component", "courses-service"),
 		),
+		axiom.WithRunnerContext(
+			axiom.WithContextData("service", "courses-service"),
+		),
 	),
 )
 
@@ -32,7 +35,11 @@ func (s *AxiomSuite) TestCourseCanBeCreated() {
 			axiom.WithMetaTags("create", "smoke"),
 			axiom.WithMetaIssue("AXIOM-201"),
 			axiom.WithMetaTestCase("COURSES-001"),
-		))
+		),
+		axiom.WithCaseContext(
+			axiom.WithContextRaw(s.T().Context()),
+			axiom.WithContextData("operation", "create-course")),
+	)
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
 		var (
@@ -74,6 +81,16 @@ func (s *AxiomSuite) TestCourseCanBeCreated() {
 		})
 		defer cfg.Teardown("clear course data", func() {
 			course = axiomCourse{}
+			expectedTitle = ""
+		})
+		cfg.Step("check test context", func() {
+			environment := axiom.MustContextValue[string](&cfg.Context, "environment")
+			service := axiom.MustContextValue[string](&cfg.Context, "service")
+			operation := axiom.MustContextValue[string](&cfg.Context, "operation")
+
+			assert.Equal(cfg.T(), "local", environment)
+			assert.Equal(cfg.T(), "courses-service", service)
+			assert.Equal(cfg.T(), "create-course", operation)
 		})
 	})
 }
@@ -86,7 +103,12 @@ func (s *AxiomSuite) TestCourseCanBePublished() {
 			axiom.WithMetaStory("Publish course"),
 			axiom.WithMetaIssue("AXIOM-202"),
 			axiom.WithMetaTestCase("COURSES-002"),
-		))
+		),
+		axiom.WithCaseContext(
+			axiom.WithContextRaw(s.T().Context()),
+			axiom.WithContextData("operation", "publish-course"),
+		),
+	)
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
 		var course axiomCourse
@@ -125,6 +147,15 @@ func (s *AxiomSuite) TestCourseCanBePublished() {
 		})
 		defer cfg.Teardown("clear course data", func() {
 			course = axiomCourse{}
+		})
+		cfg.Step("check test context", func() {
+			environment := axiom.MustContextValue[string](&cfg.Context, "environment")
+			service := axiom.MustContextValue[string](&cfg.Context, "service")
+			operation := axiom.MustContextValue[string](&cfg.Context, "operation")
+
+			assert.Equal(cfg.T(), "local", environment)
+			assert.Equal(cfg.T(), "courses-service", service)
+			assert.Equal(cfg.T(), "publish-course", operation)
 		})
 	})
 }

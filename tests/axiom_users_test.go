@@ -20,6 +20,9 @@ var usersRunner = testRunner.Join(
 			axiom.WithMetaLabel("owner", "users-team"),
 			axiom.WithMetaLabel("component", "users-service"),
 		),
+		axiom.WithRunnerContext(
+			axiom.WithContextData("service", "users-service"),
+		),
 	),
 )
 
@@ -32,6 +35,10 @@ func (s *AxiomSuite) TestUserCanBeCreated() {
 			axiom.WithMetaTags("create", "smoke"),
 			axiom.WithMetaIssue("AXIOM-101"),
 			axiom.WithMetaTestCase("USERS-001"),
+		),
+		axiom.WithCaseContext(
+			axiom.WithContextRaw(s.T().Context()),
+			axiom.WithContextData("operation", "create-user"),
 		),
 	)
 
@@ -70,6 +77,16 @@ func (s *AxiomSuite) TestUserCanBeCreated() {
 			assert.Equal(cfg.T(), expectedLabels, cfg.Meta.Labels)
 		})
 
+		cfg.Step("check test context", func() {
+			environment := axiom.MustContextValue[string](&cfg.Context, "environment")
+			service := axiom.MustContextValue[string](&cfg.Context, "service")
+			operation := axiom.MustContextValue[string](&cfg.Context, "operation")
+
+			assert.Equal(cfg.T(), "local", environment)
+			assert.Equal(cfg.T(), "users-service", service)
+			assert.Equal(cfg.T(), "create-user", operation)
+		})
+
 		cfg.Step("create user", func() {
 			user = axiomUser{
 				Email:  email,
@@ -92,6 +109,10 @@ func (s *AxiomSuite) TestUserCanBeDeactivated() {
 			axiom.WithMetaTags("deactivate", "regression"),
 			axiom.WithMetaIssue("AXIOM-102"),
 			axiom.WithMetaTestCase("USERS-002"),
+		),
+		axiom.WithCaseContext(
+			axiom.WithContextRaw(s.T().Context()),
+			axiom.WithContextData("operation", "deactivate-user"),
 		),
 	)
 
@@ -119,6 +140,16 @@ func (s *AxiomSuite) TestUserCanBeDeactivated() {
 			)
 			assert.Equal(cfg.T(), []string{"AXIOM-102"}, cfg.Meta.Issues)
 			assert.Equal(cfg.T(), []string{"USERS-002"}, cfg.Meta.TestCases)
+		})
+
+		cfg.Step("check test context", func() {
+			environment := axiom.MustContextValue[string](&cfg.Context, "environment")
+			service := axiom.MustContextValue[string](&cfg.Context, "service")
+			operation := axiom.MustContextValue[string](&cfg.Context, "operation")
+
+			assert.Equal(cfg.T(), "local", environment)
+			assert.Equal(cfg.T(), "users-service", service)
+			assert.Equal(cfg.T(), "deactivate-user", operation)
 		})
 
 		cfg.Step("deactivate user", func() {
