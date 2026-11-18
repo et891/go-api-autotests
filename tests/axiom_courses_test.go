@@ -5,10 +5,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type axiomCourse struct {
-	Title     string
-	Published bool
-}
 
 var coursesRunner = testRunner.Join(
 	axiom.NewRunner(
@@ -20,9 +16,10 @@ var coursesRunner = testRunner.Join(
 			axiom.WithMetaLabel("owner", "courses-team"),
 			axiom.WithMetaLabel("component", "courses-service"),
 		),
-		axiom.WithRunnerContext(
-			axiom.WithContextData("service", "courses-service"),
-		),
+        axiom.WithRunnerContext(axiom.WithContextData("service", "courses-service")),
+        axiom.WithRunnerResource("course-client", courseClientResource),
+        axiom.WithRunnerFixture("course-data", courseDataFixture),
+        axiom.WithRunnerFixture("unpublished-course", unpublishedCourseFixture),
 	),
 )
 
@@ -42,13 +39,10 @@ func (s *AxiomSuite) TestCourseCanBeCreated() {
 	)
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
-		var (
-			expectedTitle string
-			course        axiomCourse
-		)
-		cfg.Setup("prepare course data", func() {
-			expectedTitle = "Go API Autotests"
-		})
+		client := axiom.MustResource[*axiomCourseClient](cfg.Runner, "course-client")
+        course_data := axiom.GetFixture[axiomCourseData](cfg, "course-data")
+
+        var course  *axiomCourse
 
 		cfg.Step("check test metadata", func() {
 			assert.Equal(cfg.T(), "Learning platform", cfg.Meta.Epic)
@@ -70,19 +64,13 @@ func (s *AxiomSuite) TestCourseCanBeCreated() {
 			assert.Equal(cfg.T(), expectedLabels, cfg.Meta.Labels)
 		})
 		cfg.Step("create course", func() {
-			course = axiomCourse{
-				Title:     expectedTitle,
-				Published: false,
-			}
+			course = client.Create(course_data)
 		})
 		cfg.Step("check created course", func() {
-			assert.Equal(cfg.T(), expectedTitle, course.Title)
+			assert.Equal(cfg.T(), course_data.Title, course.Title)
 			assert.False(cfg.T(), course.Published)
 		})
-		defer cfg.Teardown("clear course data", func() {
-			course = axiomCourse{}
-			expectedTitle = ""
-		})
+
 		cfg.Step("check test context", func() {
 			environment := axiom.MustContextValue[string](&cfg.Context, "environment")
 			service := axiom.MustContextValue[string](&cfg.Context, "service")
@@ -111,14 +99,9 @@ func (s *AxiomSuite) TestCourseCanBePublished() {
 	)
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
-		var course axiomCourse
-		cfg.Setup("prepare unpublished course", func() {
-			expectedTitle := "Go API Autotests"
-			course = axiomCourse{
-				Title:     expectedTitle,
-				Published: false,
-			}
-		})
+		client := axiom.MustResource[*axiomCourseClient](cfg.Runner, "course-client")
+        course := axiom.GetFixture[*axiomCourse](cfg, "unpublished-course")
+
 		cfg.Step("check test metadata", func() {
 			assert.Equal(cfg.T(), "Learning platform", cfg.Meta.Epic)
 			assert.Equal(cfg.T(), "Courses", cfg.Meta.Feature)
@@ -140,13 +123,10 @@ func (s *AxiomSuite) TestCourseCanBePublished() {
 		})
 
 		cfg.Step("publish course", func() {
-			course.Published = true
+			client.Publish(course)
 		})
 		cfg.Step("check published course", func() {
 			assert.True(cfg.T(), course.Published)
-		})
-		defer cfg.Teardown("clear course data", func() {
-			course = axiomCourse{}
 		})
 		cfg.Step("check test context", func() {
 			environment := axiom.MustContextValue[string](&cfg.Context, "environment")
