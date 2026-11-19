@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
 var coursesRunner = testRunner.Join(
 	axiom.NewRunner(
 		axiom.WithRunnerMeta(
@@ -16,10 +15,11 @@ var coursesRunner = testRunner.Join(
 			axiom.WithMetaLabel("owner", "courses-team"),
 			axiom.WithMetaLabel("component", "courses-service"),
 		),
-        axiom.WithRunnerContext(axiom.WithContextData("service", "courses-service")),
-        axiom.WithRunnerResource("course-client", courseClientResource),
-        axiom.WithRunnerFixture("course-data", courseDataFixture),
-        axiom.WithRunnerFixture("unpublished-course", unpublishedCourseFixture),
+		axiom.WithRunnerContext(axiom.WithContextData("service", "courses-service")),
+		axiom.WithRunnerResource("course-client", courseClientResource),
+		axiom.WithRunnerFixture("course-data", courseDataFixture),
+		axiom.WithRunnerFixture("unpublished-course", unpublishedCourseFixture),
+		axiom.WithRunnerHooks(axiom.WithBeforeTest(coursesToolset.Bind)),
 	),
 )
 
@@ -38,11 +38,10 @@ func (s *AxiomSuite) TestCourseCanBeCreated() {
 			axiom.WithContextData("operation", "create-course")),
 	)
 
-	s.RunCase(testCase, func(cfg *axiom.Config) {
-		client := axiom.MustResource[*axiomCourseClient](cfg.Runner, "course-client")
-        course_data := axiom.GetFixture[axiomCourseData](cfg, "course-data")
+	s.RunCase(testCase, coursesToolset.Action(func(cfg *axiom.Config, tools *axiomCoursesTools) {
+		courseData := tools.CourseData()
 
-        var course  *axiomCourse
+		var course *axiomCourse
 
 		cfg.Step("check test metadata", func() {
 			assert.Equal(cfg.T(), "Learning platform", cfg.Meta.Epic)
@@ -64,23 +63,19 @@ func (s *AxiomSuite) TestCourseCanBeCreated() {
 			assert.Equal(cfg.T(), expectedLabels, cfg.Meta.Labels)
 		})
 		cfg.Step("create course", func() {
-			course = client.Create(course_data)
+			course = tools.Client.Create(courseData)
 		})
 		cfg.Step("check created course", func() {
-			assert.Equal(cfg.T(), course_data.Title, course.Title)
+			assert.Equal(cfg.T(), courseData.Title, course.Title)
 			assert.False(cfg.T(), course.Published)
 		})
 
 		cfg.Step("check test context", func() {
-			environment := axiom.MustContextValue[string](&cfg.Context, "environment")
-			service := axiom.MustContextValue[string](&cfg.Context, "service")
-			operation := axiom.MustContextValue[string](&cfg.Context, "operation")
-
-			assert.Equal(cfg.T(), "local", environment)
-			assert.Equal(cfg.T(), "courses-service", service)
-			assert.Equal(cfg.T(), "create-course", operation)
+			assert.Equal(cfg.T(), "local", tools.Environment)
+			assert.Equal(cfg.T(), "courses-service", tools.Service)
+			assert.Equal(cfg.T(), "create-course", tools.Operation)
 		})
-	})
+	}))
 }
 
 func (s *AxiomSuite) TestCourseCanBePublished() {
@@ -98,9 +93,8 @@ func (s *AxiomSuite) TestCourseCanBePublished() {
 		),
 	)
 
-	s.RunCase(testCase, func(cfg *axiom.Config) {
-		client := axiom.MustResource[*axiomCourseClient](cfg.Runner, "course-client")
-        course := axiom.GetFixture[*axiomCourse](cfg, "unpublished-course")
+	s.RunCase(testCase, coursesToolset.Action(func(cfg *axiom.Config, tools *axiomCoursesTools) {
+		course := tools.UnpublishedCourse()
 
 		cfg.Step("check test metadata", func() {
 			assert.Equal(cfg.T(), "Learning platform", cfg.Meta.Epic)
@@ -123,19 +117,15 @@ func (s *AxiomSuite) TestCourseCanBePublished() {
 		})
 
 		cfg.Step("publish course", func() {
-			client.Publish(course)
+			tools.Client.Publish(course)
 		})
 		cfg.Step("check published course", func() {
 			assert.True(cfg.T(), course.Published)
 		})
 		cfg.Step("check test context", func() {
-			environment := axiom.MustContextValue[string](&cfg.Context, "environment")
-			service := axiom.MustContextValue[string](&cfg.Context, "service")
-			operation := axiom.MustContextValue[string](&cfg.Context, "operation")
-
-			assert.Equal(cfg.T(), "local", environment)
-			assert.Equal(cfg.T(), "courses-service", service)
-			assert.Equal(cfg.T(), "publish-course", operation)
+			assert.Equal(cfg.T(), "local", tools.Environment)
+			assert.Equal(cfg.T(), "courses-service", tools.Service)
+			assert.Equal(cfg.T(), "publish-course", tools.Operation)
 		})
-	})
+	}))
 }
