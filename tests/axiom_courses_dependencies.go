@@ -46,17 +46,16 @@ func unpublishedCourseFixture(cfg *axiom.Config) (any, func(), error) {
 	var course *axiomCourse
 
 	cfg.Setup("create fixture unpublished course", func() {
-        course = client.Create(course_data)
+		course = client.Create(course_data)
 	})
 
-    cleanup := func() {
+	cleanup := func() {
 		cfg.Teardown("delete fixture unpublished course", func() {
 			client.Delete(course)
 		})
 	}
 	return course, cleanup, nil
 }
-
 
 func activeCourseFixture(cfg *axiom.Config) (any, func(), error) {
 	client := axiom.MustResource[*axiomCourseClient](cfg.Runner, "course-client")

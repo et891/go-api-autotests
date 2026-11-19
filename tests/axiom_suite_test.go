@@ -7,9 +7,9 @@ import (
 )
 
 func TestAxiomSuite(t *testing.T) {
-	testSuite := axiom.NewSuite(
+	testSuite := axiom.NewSuiteFactory(
 		t,
-		new(AxiomSuite),
+		func() *AxiomSuite { return new(AxiomSuite) },
 		axiom.WithSuiteConfigRunner(testRunner),
 	)
 
@@ -23,7 +23,6 @@ func TestAxiomSuite(t *testing.T) {
 		(*AxiomSuite).TestUserCanBeDeactivated,
 		axiom.WithSuiteTestRunner(usersRunner),
 	)
-
 	testSuite.Test(
 		"course can be created",
 		(*AxiomSuite).TestCourseCanBeCreated,
