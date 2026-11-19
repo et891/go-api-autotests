@@ -28,6 +28,7 @@ var coursesRunner = testRunner.Join(
 			axiom.WithSkipReason("course tests are disabled by SKIP_COURSES_TESTS"),
 		),
 		axiom.WithRunnerParallel(axiom.WithParallelEnabled()),
+		axiom.WithRunnerPlugins(stepCounterPlugin()),
 	),
 )
 
