@@ -15,4 +15,13 @@ var testRunner = axiom.NewRunner(
 	axiom.WithRunnerContext(
 		axiom.WithContextData("environment", "local"),
 	),
+	axiom.WithRunnerHooks(
+		axiom.WithBeforeAll(logBeforeAll),
+		axiom.WithAfterAll(logAfterAll),
+		axiom.WithBeforeTest(logBeforeTest),
+		axiom.WithAfterTest(logAfterTest),
+		axiom.WithBeforeStep(logBeforeStep),
+		axiom.WithAfterStep(logAfterStep),
+	),
+	axiom.WithRunnerPlugins(durationPlugin(), stepCounterPlugin()),
 )
