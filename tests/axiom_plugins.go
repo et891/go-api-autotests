@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Nikita-Filonov/axiom"
@@ -71,5 +72,19 @@ func stepCounterPlugin() axiom.Plugin {
 				)
 			}
 		})
+	}
+}
+
+func featureNamePlugin() axiom.Plugin {
+	return func(cfg *axiom.Config) {
+		if cfg.Meta.Feature == "" {
+			return
+		}
+
+		cfg.Case.Name = fmt.Sprintf(
+			"[%s] %s",
+			cfg.Meta.Feature,
+			cfg.Case.Name,
+		)
 	}
 }
