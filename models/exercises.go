@@ -1,22 +1,24 @@
 package models
 
 type Exercise struct {
-	Id            int     `json:"id"`
+	ID            string  `json:"id"`
 	Title         string  `json:"title"`
-	CourseId      int     `json:"course_id"`
-	MaxScore      *int    `json:"maxScore,omitempty"`
-	MinScore      *int    `json:"minScore,omitempty"`
+	CourseID      string  `json:"courseId"`
+	MaxScore      *int    `json:"maxScore"`
+	MinScore      *int    `json:"minScore"`
 	OrderIndex    int     `json:"orderIndex"`
 	Description   string  `json:"description"`
-	EstimatedTime *string `json:"estimatedTime,omitempty"`
+	EstimatedTime *string `json:"estimatedTime"`
 }
 
 type ExerciseResponse struct {
 	Exercise Exercise `json:"exercise"`
 }
+
 type ExercisesResponse struct {
 	Exercises []Exercise `json:"exercises"`
 }
+
 type ListExercisesQuery struct {
 	CourseID string
 }
@@ -27,7 +29,7 @@ func (q ListExercisesQuery) ToQueryParams() map[string]string {
 
 type CreateExerciseRequest struct {
 	Title         string  `json:"title"`
-	CourseID      int     `json:"courseId"`
+	CourseID      string  `json:"courseId"`
 	MaxScore      *int    `json:"maxScore,omitempty"`
 	MinScore      *int    `json:"minScore,omitempty"`
 	OrderIndex    int     `json:"orderIndex"`
@@ -36,7 +38,6 @@ type CreateExerciseRequest struct {
 }
 
 type UpdateExerciseRequest struct {
-	Id            int     `json:"id"`
 	Title         *string `json:"title,omitempty"`
 	MaxScore      *int    `json:"maxScore,omitempty"`
 	MinScore      *int    `json:"minScore,omitempty"`

@@ -159,37 +159,26 @@ func TestGRPCGetUserMe(t *testing.T) {
 	defer connection.Close()
 
 	usersClient := v1.NewUsersServiceClient(connection)
+	authenticationClient := v1.NewAuthenticationServiceClient(connection)
 
-	createdUser, err := usersClient.CreateUser(
-		context.Background(),
-		userRequest,
-	)
+	createdUser, err := usersClient.CreateUser(context.Background(), userRequest)
 
 	require.NoError(t, err)
 	require.NotNil(t, createdUser)
 	require.NotNil(t, createdUser.GetUser())
 	require.NotEmpty(t, createdUser.GetUser().GetId())
 
-	authenticationClient :=
-		v1.NewAuthenticationServiceClient(connection)
-
 	authRequest := &v1.LoginRequest{
 		Email:    userRequest.GetEmail(),
 		Password: userRequest.GetPassword(),
 	}
 
-	loginResponse, err := authenticationClient.Login(
-		context.Background(),
-		authRequest,
-	)
+	loginResponse, err := authenticationClient.Login(context.Background(), authRequest)
 
 	require.NoError(t, err)
 	require.NotNil(t, loginResponse)
 	require.NotNil(t, loginResponse.GetToken())
-	require.NotEmpty(
-		t,
-		loginResponse.GetToken().GetAccessToken(),
-	)
+	require.NotEmpty(t, loginResponse.GetToken().GetAccessToken())
 
 	authorizationMetadata := metadata.Pairs(
 		"authorization",
@@ -201,9 +190,7 @@ func TestGRPCGetUserMe(t *testing.T) {
 		authorizationMetadata,
 	)
 
-	response, err := usersClient.GetMe(
-		contextWithToken, &v1.Empty{},
-	)
+	response, err := usersClient.GetMe(contextWithToken, &v1.Empty{})
 
 	require.NoError(t, err)
 	require.NotNil(t, response)
@@ -215,6 +202,5 @@ func TestGRPCGetUserMe(t *testing.T) {
 	assert.Equal(t, createdUser.GetUser().GetFirstName(), response.GetUser().GetFirstName())
 	assert.Equal(t, createdUser.GetUser().GetMiddleName(), response.GetUser().GetMiddleName())
 
-	t.Logf("my user with ID %s", response.GetUser())
-
+	t.Logf("received current user with ID %s", response.GetUser().GetId())
 }

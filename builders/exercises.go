@@ -1,40 +1,30 @@
 package builders
 
 import (
-	"strconv"
-
 	coursev1 "github.com/Nikita-Filonov/api-go-autotests-server/gen/go/v1"
 	"github.com/et891/go-api-autotests/models"
 )
 
 type ExerciseCreate struct {
 	Title         string
-	CourseId      int
-	MaxScore      *int
-	MinScore      *int
+	CourseID      string
+	MaxScore      int
+	MinScore      int
 	OrderIndex    int
 	Description   string
-	EstimatedTime *string
+	EstimatedTime string
 }
 
 type ExerciseCreateOption func(*ExerciseCreate)
 
-func (b *Builder) ExerciseCreate(courseID int, options ...ExerciseCreateOption) ExerciseCreate {
-	title := b.generator.Title()
-	maxScore := b.generator.MaxScore()
-	minScore := b.generator.MinScore()
-	orderIndex := b.generator.OrderIndex()
-	description := b.generator.Description()
-	estimatedTime := b.generator.EstimatedTime()
-
+func (b *Builder) ExerciseCreate(options ...ExerciseCreateOption) ExerciseCreate {
 	exercise := ExerciseCreate{
-		Title:         title,
-		CourseId:      courseID,
-		MaxScore:      &maxScore,
-		MinScore:      &minScore,
-		OrderIndex:    orderIndex,
-		Description:   description,
-		EstimatedTime: &estimatedTime,
+		Title:         b.generator.Title(),
+		MaxScore:      b.generator.MaxScore(),
+		MinScore:      b.generator.MinScore(),
+		OrderIndex:    b.generator.OrderIndex(),
+		Description:   b.generator.Description(),
+		EstimatedTime: b.generator.EstimatedTime(),
 	}
 
 	for _, option := range options {
@@ -48,12 +38,16 @@ func WithExerciseCreateTitle(title string) ExerciseCreateOption {
 	return func(exercise *ExerciseCreate) { exercise.Title = title }
 }
 
+func WithExerciseCreateCourseID(courseID string) ExerciseCreateOption {
+	return func(exercise *ExerciseCreate) { exercise.CourseID = courseID }
+}
+
 func WithExerciseCreateMaxScore(maxScore int) ExerciseCreateOption {
-	return func(exercise *ExerciseCreate) { exercise.MaxScore = &maxScore }
+	return func(exercise *ExerciseCreate) { exercise.MaxScore = maxScore }
 }
 
 func WithExerciseCreateMinScore(minScore int) ExerciseCreateOption {
-	return func(exercise *ExerciseCreate) { exercise.MinScore = &minScore }
+	return func(exercise *ExerciseCreate) { exercise.MinScore = minScore }
 }
 
 func WithExerciseCreateOrderIndex(orderIndex int) ExerciseCreateOption {
@@ -65,59 +59,55 @@ func WithExerciseCreateDescription(description string) ExerciseCreateOption {
 }
 
 func WithExerciseCreateEstimatedTime(estimatedTime string) ExerciseCreateOption {
-	return func(exercise *ExerciseCreate) { exercise.EstimatedTime = &estimatedTime }
+	return func(exercise *ExerciseCreate) { exercise.EstimatedTime = estimatedTime }
 }
 
-func (c ExerciseCreate) HTTPRequest() models.CreateExerciseRequest {
+func (e ExerciseCreate) HTTPRequest() models.CreateExerciseRequest {
 	return models.CreateExerciseRequest{
-		Title:         c.Title,
-		CourseID:      c.CourseId,
-		MaxScore:      c.MaxScore,
-		MinScore:      c.MinScore,
-		OrderIndex:    c.OrderIndex,
-		Description:   c.Description,
-		EstimatedTime: c.EstimatedTime,
+		Title:         e.Title,
+		CourseID:      e.CourseID,
+		MaxScore:      &e.MaxScore,
+		MinScore:      &e.MinScore,
+		OrderIndex:    e.OrderIndex,
+		Description:   e.Description,
+		EstimatedTime: &e.EstimatedTime,
 	}
 }
 
-func (c ExerciseCreate) GRPCRequest() *coursev1.CreateExerciseRequest {
+func (e ExerciseCreate) GRPCRequest() *coursev1.CreateExerciseRequest {
+	maxScore := int32(e.MaxScore)
+	minScore := int32(e.MinScore)
+
 	return &coursev1.CreateExerciseRequest{
-		Title:         c.Title,
-		CourseId:      strconv.Itoa(c.CourseId),
-		MaxScore:      intToInt32Ptr(c.MaxScore),
-		MinScore:      intToInt32Ptr(c.MinScore),
-		OrderIndex:    int32(c.OrderIndex),
-		Description:   c.Description,
-		EstimatedTime: c.EstimatedTime,
+		Title:         e.Title,
+		CourseId:      e.CourseID,
+		MaxScore:      &maxScore,
+		MinScore:      &minScore,
+		OrderIndex:    int32(e.OrderIndex),
+		Description:   e.Description,
+		EstimatedTime: &e.EstimatedTime,
 	}
 }
 
 type ExerciseUpdate struct {
-	Title         *string
-	MaxScore      *int
-	MinScore      *int
-	OrderIndex    *int
-	Description   *string
-	EstimatedTime *string
+	Title         string
+	MaxScore      int
+	MinScore      int
+	OrderIndex    int
+	Description   string
+	EstimatedTime string
 }
 
 type ExerciseUpdateOption func(*ExerciseUpdate)
 
 func (b *Builder) ExerciseUpdate(options ...ExerciseUpdateOption) ExerciseUpdate {
-	title := b.generator.Title()
-	maxScore := b.generator.MaxScore()
-	minScore := b.generator.MinScore()
-	orderIndex := b.generator.OrderIndex()
-	description := b.generator.Description()
-	estimatedTime := b.generator.EstimatedTime()
-
 	update := ExerciseUpdate{
-		Title:         &title,
-		MaxScore:      &maxScore,
-		MinScore:      &minScore,
-		OrderIndex:    &orderIndex,
-		Description:   &description,
-		EstimatedTime: &estimatedTime,
+		Title:         b.generator.Title(),
+		MaxScore:      b.generator.MaxScore(),
+		MinScore:      b.generator.MinScore(),
+		OrderIndex:    b.generator.OrderIndex(),
+		Description:   b.generator.Description(),
+		EstimatedTime: b.generator.EstimatedTime(),
 	}
 
 	for _, option := range options {
@@ -128,43 +118,52 @@ func (b *Builder) ExerciseUpdate(options ...ExerciseUpdateOption) ExerciseUpdate
 }
 
 func WithExerciseUpdateTitle(title string) ExerciseUpdateOption {
-	return func(exercise *ExerciseUpdate) { exercise.Title = &title }
+	return func(update *ExerciseUpdate) { update.Title = title }
 }
 
 func WithExerciseUpdateMaxScore(maxScore int) ExerciseUpdateOption {
-	return func(exercise *ExerciseUpdate) { exercise.MaxScore = &maxScore }
+	return func(update *ExerciseUpdate) { update.MaxScore = maxScore }
 }
+
 func WithExerciseUpdateMinScore(minScore int) ExerciseUpdateOption {
-	return func(exercise *ExerciseUpdate) { exercise.MinScore = &minScore }
+	return func(update *ExerciseUpdate) { update.MinScore = minScore }
 }
+
 func WithExerciseUpdateOrderIndex(orderIndex int) ExerciseUpdateOption {
-	return func(exercise *ExerciseUpdate) { exercise.OrderIndex = &orderIndex }
+	return func(update *ExerciseUpdate) { update.OrderIndex = orderIndex }
 }
+
 func WithExerciseUpdateDescription(description string) ExerciseUpdateOption {
-	return func(exercise *ExerciseUpdate) { exercise.Description = &description }
+	return func(update *ExerciseUpdate) { update.Description = description }
 }
+
 func WithExerciseUpdateEstimatedTime(estimatedTime string) ExerciseUpdateOption {
-	return func(exercise *ExerciseUpdate) { exercise.EstimatedTime = &estimatedTime }
+	return func(update *ExerciseUpdate) { update.EstimatedTime = estimatedTime }
 }
-func (c ExerciseUpdate) HTTPRequest() models.UpdateExerciseRequest {
+
+func (u ExerciseUpdate) HTTPRequest() models.UpdateExerciseRequest {
 	return models.UpdateExerciseRequest{
-		Title:         c.Title,
-		MaxScore:      c.MaxScore,
-		MinScore:      c.MinScore,
-		Description:   c.Description,
-		OrderIndex:    c.OrderIndex,
-		EstimatedTime: c.EstimatedTime,
+		Title:         &u.Title,
+		MaxScore:      &u.MaxScore,
+		MinScore:      &u.MinScore,
+		OrderIndex:    &u.OrderIndex,
+		Description:   &u.Description,
+		EstimatedTime: &u.EstimatedTime,
 	}
 }
 
-func (c ExerciseUpdate) GRPCRequest(exerciseID string) *coursev1.UpdateExerciseRequest {
+func (u ExerciseUpdate) GRPCRequest(exerciseID string) *coursev1.UpdateExerciseRequest {
+	maxScore := int32(u.MaxScore)
+	minScore := int32(u.MinScore)
+	orderIndex := int32(u.OrderIndex)
+
 	return &coursev1.UpdateExerciseRequest{
 		Id:            exerciseID,
-		Title:         c.Title,
-		MaxScore:      intToInt32Ptr(c.MaxScore),
-		MinScore:      intToInt32Ptr(c.MinScore),
-		OrderIndex:    intToInt32Ptr(c.OrderIndex),
-		Description:   c.Description,
-		EstimatedTime: c.EstimatedTime,
+		Title:         &u.Title,
+		MaxScore:      &maxScore,
+		MinScore:      &minScore,
+		OrderIndex:    &orderIndex,
+		Description:   &u.Description,
+		EstimatedTime: &u.EstimatedTime,
 	}
 }

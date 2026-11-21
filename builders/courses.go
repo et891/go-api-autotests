@@ -5,42 +5,25 @@ import (
 	"github.com/et891/go-api-autotests/models"
 )
 
-func intToInt32Ptr(value *int) *int32 {
-	if value == nil {
-		return nil
-	}
-
-	converted := int32(*value)
-	return &converted
-}
-
 type CourseCreate struct {
 	Title           string
-	MaxScore        *int
-	MinScore        *int
+	MaxScore        int
+	MinScore        int
 	Description     string
-	EstimatedTime   *string
+	EstimatedTime   string
 	PreviewFileID   string
 	CreatedByUserID string
 }
 
 type CourseCreateOption func(*CourseCreate)
 
-func (b *Builder) CourseCreate(previewFileID string, createdByUserID string, options ...CourseCreateOption) CourseCreate {
-	title := b.generator.Title()
-	maxScore := b.generator.MaxScore()
-	minScore := b.generator.MinScore()
-	description := b.generator.Description()
-	estimatedTime := b.generator.EstimatedTime()
-
+func (b *Builder) CourseCreate(options ...CourseCreateOption) CourseCreate {
 	course := CourseCreate{
-		Title:           title,
-		MaxScore:        &maxScore,
-		MinScore:        &minScore,
-		Description:     description,
-		EstimatedTime:   &estimatedTime,
-		PreviewFileID:   previewFileID,
-		CreatedByUserID: createdByUserID,
+		Title:         b.generator.Title(),
+		MaxScore:      b.generator.MaxScore(),
+		MinScore:      b.generator.MinScore(),
+		Description:   b.generator.Description(),
+		EstimatedTime: b.generator.EstimatedTime(),
 	}
 
 	for _, option := range options {
@@ -55,11 +38,11 @@ func WithCourseCreateTitle(title string) CourseCreateOption {
 }
 
 func WithCourseCreateMaxScore(maxScore int) CourseCreateOption {
-	return func(course *CourseCreate) { course.MaxScore = &maxScore }
+	return func(course *CourseCreate) { course.MaxScore = maxScore }
 }
 
 func WithCourseCreateMinScore(minScore int) CourseCreateOption {
-	return func(course *CourseCreate) { course.MinScore = &minScore }
+	return func(course *CourseCreate) { course.MinScore = minScore }
 }
 
 func WithCourseCreateDescription(description string) CourseCreateOption {
@@ -67,56 +50,61 @@ func WithCourseCreateDescription(description string) CourseCreateOption {
 }
 
 func WithCourseCreateEstimatedTime(estimatedTime string) CourseCreateOption {
-	return func(course *CourseCreate) { course.EstimatedTime = &estimatedTime }
+	return func(course *CourseCreate) { course.EstimatedTime = estimatedTime }
+}
+
+func WithCourseCreatePreviewFileID(fileID string) CourseCreateOption {
+	return func(course *CourseCreate) { course.PreviewFileID = fileID }
+}
+
+func WithCourseCreateCreatedByUserID(userID string) CourseCreateOption {
+	return func(course *CourseCreate) { course.CreatedByUserID = userID }
 }
 
 func (c CourseCreate) HTTPRequest() models.CreateCourseRequest {
 	return models.CreateCourseRequest{
 		Title:           c.Title,
-		MaxScore:        c.MaxScore,
-		MinScore:        c.MinScore,
+		MaxScore:        &c.MaxScore,
+		MinScore:        &c.MinScore,
 		Description:     c.Description,
-		EstimatedTime:   c.EstimatedTime,
+		EstimatedTime:   &c.EstimatedTime,
 		PreviewFileID:   c.PreviewFileID,
 		CreatedByUserID: c.CreatedByUserID,
 	}
 }
 
 func (c CourseCreate) GRPCRequest() *coursev1.CreateCourseRequest {
+	maxScore := int32(c.MaxScore)
+	minScore := int32(c.MinScore)
+
 	return &coursev1.CreateCourseRequest{
 		Title:           c.Title,
-		MaxScore:        intToInt32Ptr(c.MaxScore),
-		MinScore:        intToInt32Ptr(c.MinScore),
+		MaxScore:        &maxScore,
+		MinScore:        &minScore,
 		Description:     c.Description,
-		EstimatedTime:   c.EstimatedTime,
+		EstimatedTime:   &c.EstimatedTime,
 		PreviewFileId:   c.PreviewFileID,
 		CreatedByUserId: c.CreatedByUserID,
 	}
 }
 
 type CourseUpdate struct {
-	Title         *string
-	MaxScore      *int
-	MinScore      *int
-	Description   *string
-	EstimatedTime *string
+	Title         string
+	MaxScore      int
+	MinScore      int
+	Description   string
+	EstimatedTime string
 }
 
 type CourseUpdateOption func(*CourseUpdate)
 
 func (b *Builder) CourseUpdate(options ...CourseUpdateOption) CourseUpdate {
-	title := b.generator.Title()
-	maxScore := b.generator.MaxScore()
-	minScore := b.generator.MinScore()
-	description := b.generator.Description()
-	estimatedTime := b.generator.EstimatedTime()
-
 	update := CourseUpdate{
-		Title:         &title,
-		MaxScore:      &maxScore,
-		MinScore:      &minScore,
-		Description:   &description,
-		EstimatedTime: &estimatedTime,
+		Title:         b.generator.Title(),
+		MaxScore:      b.generator.MaxScore(),
+		MinScore:      b.generator.MinScore(),
+		Description:   b.generator.Description(),
+		EstimatedTime: b.generator.EstimatedTime(),
 	}
 
 	for _, option := range options {
@@ -127,38 +115,45 @@ func (b *Builder) CourseUpdate(options ...CourseUpdateOption) CourseUpdate {
 }
 
 func WithCourseUpdateTitle(title string) CourseUpdateOption {
-	return func(course *CourseUpdate) { course.Title = &title }
+	return func(update *CourseUpdate) { update.Title = title }
 }
 
 func WithCourseUpdateMaxScore(maxScore int) CourseUpdateOption {
-	return func(course *CourseUpdate) { course.MaxScore = &maxScore }
+	return func(update *CourseUpdate) { update.MaxScore = maxScore }
 }
+
 func WithCourseUpdateMinScore(minScore int) CourseUpdateOption {
-	return func(course *CourseUpdate) { course.MinScore = &minScore }
+	return func(update *CourseUpdate) { update.MinScore = minScore }
 }
+
 func WithCourseUpdateDescription(description string) CourseUpdateOption {
-	return func(course *CourseUpdate) { course.Description = &description }
+	return func(update *CourseUpdate) { update.Description = description }
 }
+
 func WithCourseUpdateEstimatedTime(estimatedTime string) CourseUpdateOption {
-	return func(course *CourseUpdate) { course.EstimatedTime = &estimatedTime }
+	return func(update *CourseUpdate) { update.EstimatedTime = estimatedTime }
 }
-func (c CourseUpdate) HTTPRequest() models.UpdateCourseRequest {
+
+func (u CourseUpdate) HTTPRequest() models.UpdateCourseRequest {
 	return models.UpdateCourseRequest{
-		Title:         c.Title,
-		MaxScore:      c.MaxScore,
-		MinScore:      c.MinScore,
-		Description:   c.Description,
-		EstimatedTime: c.EstimatedTime,
+		Title:         &u.Title,
+		MaxScore:      &u.MaxScore,
+		MinScore:      &u.MinScore,
+		Description:   &u.Description,
+		EstimatedTime: &u.EstimatedTime,
 	}
 }
 
-func (c CourseUpdate) GRPCRequest(courseID string) *coursev1.UpdateCourseRequest {
+func (u CourseUpdate) GRPCRequest(courseID string) *coursev1.UpdateCourseRequest {
+	maxScore := int32(u.MaxScore)
+	minScore := int32(u.MinScore)
+
 	return &coursev1.UpdateCourseRequest{
 		Id:            courseID,
-		Title:         c.Title,
-		MaxScore:      intToInt32Ptr(c.MaxScore),
-		MinScore:      intToInt32Ptr(c.MinScore),
-		Description:   c.Description,
-		EstimatedTime: c.EstimatedTime,
+		Title:         &u.Title,
+		MaxScore:      &maxScore,
+		MinScore:      &minScore,
+		Description:   &u.Description,
+		EstimatedTime: &u.EstimatedTime,
 	}
 }
