@@ -2,10 +2,11 @@ package grpc
 
 import (
 	"context"
-	"testing"
 
 	v1 "github.com/Nikita-Filonov/api-go-autotests-server/gen/go/v1"
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/Nikita-Filonov/axiom"
+	"github.com/et891/go-api-autotests/builders"
+	"github.com/et891/go-api-autotests/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -13,194 +14,183 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func TestCreateUser(t *testing.T) {
-	request := &v1.CreateUserRequest{
-		Email:      gofakeit.Email(),
-		Password:   gofakeit.Password(true, true, true, true, false, 12),
-		LastName:   gofakeit.LastName(),
-		FirstName:  gofakeit.FirstName(),
-		MiddleName: gofakeit.FirstName(),
-	}
-
-	connection, err := grpc.NewClient(
-		"localhost:9000",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	require.NoError(t, err)
-	defer connection.Close()
-
-	usersClient := v1.NewUsersServiceClient(connection)
-
-	response, err := usersClient.CreateUser(
-		context.Background(),
-		request,
+func (s *suite) TestCreateUser() {
+	testCase := axiom.NewCase(
+		axiom.WithCaseName("create user"),
 	)
 
-	require.NoError(t, err)
-	require.NotNil(t, response)
-	require.NotNil(t, response.GetUser())
-	require.NotEmpty(t, response.GetUser().GetId())
+	s.RunCase(testCase, func(cfg *axiom.Config) {
+		builder := builders.New(fake.New())
+		user := builder.UserCreate()
+		request := user.GRPCRequest()
 
-	assert.Equal(t, request.GetEmail(), response.GetUser().GetEmail())
-	assert.Equal(t, request.GetLastName(), response.GetUser().GetLastName())
-	assert.Equal(t, request.GetFirstName(), response.GetUser().GetFirstName())
-	assert.Equal(t, request.GetMiddleName(), response.GetUser().GetMiddleName())
+		connection, err := grpc.NewClient(
+			"localhost:9000",
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		)
+		require.NoError(cfg.T(), err)
+		defer connection.Close()
 
-	t.Logf(
-		"created user with ID %s",
-		response.GetUser().GetId(),
-	)
+		client := v1.NewUsersServiceClient(connection)
+		response, err := client.CreateUser(context.Background(), request)
+
+		require.NoError(cfg.T(), err)
+		require.NotNil(cfg.T(), response)
+		require.NotNil(cfg.T(), response.GetUser())
+		require.NotEmpty(cfg.T(), response.GetUser().GetId())
+
+		assert.Equal(cfg.T(), request.GetEmail(), response.GetUser().GetEmail())
+		assert.Equal(cfg.T(), request.GetLastName(), response.GetUser().GetLastName())
+		assert.Equal(cfg.T(), request.GetFirstName(), response.GetUser().GetFirstName())
+		assert.Equal(cfg.T(), request.GetMiddleName(), response.GetUser().GetMiddleName())
+
+		cfg.T().Logf("created user with ID %s", response.GetUser().GetId())
+	})
 }
 
-func TestUpdateUser(t *testing.T) {
-	userRequest := &v1.CreateUserRequest{
-		Email:      gofakeit.Email(),
-		Password:   gofakeit.Password(true, true, true, true, false, 12),
-		LastName:   gofakeit.LastName(),
-		FirstName:  gofakeit.FirstName(),
-		MiddleName: gofakeit.FirstName(),
-	}
-
-	connection, err := grpc.NewClient(
-		"localhost:9000",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	require.NoError(t, err)
-	defer connection.Close()
-
-	usersClient := v1.NewUsersServiceClient(connection)
-
-	createdUser, err := usersClient.CreateUser(
-		context.Background(),
-		userRequest,
+func (s *suite) TestUpdateUser() {
+	testCase := axiom.NewCase(
+		axiom.WithCaseName("update user"),
 	)
 
-	require.NoError(t, err)
-	require.NotNil(t, createdUser)
-	require.NotNil(t, createdUser.GetUser())
-	require.NotEmpty(t, createdUser.GetUser().GetId())
+	s.RunCase(testCase, func(cfg *axiom.Config) {
+		builder := builders.New(fake.New())
+		user := builder.UserCreate()
+		userRequest := user.GRPCRequest()
 
-	authenticationClient :=
-		v1.NewAuthenticationServiceClient(connection)
+		connection, err := grpc.NewClient(
+			"localhost:9000",
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		)
+		require.NoError(cfg.T(), err)
+		defer connection.Close()
 
-	authRequest := &v1.LoginRequest{
-		Email:    userRequest.GetEmail(),
-		Password: userRequest.GetPassword(),
-	}
+		usersClient := v1.NewUsersServiceClient(connection)
 
-	loginResponse, err := authenticationClient.Login(
-		context.Background(),
-		authRequest,
-	)
+		createdUser, err := usersClient.CreateUser(
+			context.Background(),
+			userRequest,
+		)
 
-	require.NoError(t, err)
-	require.NotNil(t, loginResponse)
-	require.NotNil(t, loginResponse.GetToken())
-	require.NotEmpty(
-		t,
-		loginResponse.GetToken().GetAccessToken(),
-	)
+		require.NoError(cfg.T(), err)
+		require.NotNil(cfg.T(), createdUser)
+		require.NotNil(cfg.T(), createdUser.GetUser())
+		require.NotEmpty(cfg.T(), createdUser.GetUser().GetId())
 
-	email := gofakeit.Email()
-	lastName := gofakeit.LastName()
-	firstName := gofakeit.FirstName()
-	middleName := gofakeit.FirstName()
+		authenticationClient :=
+			v1.NewAuthenticationServiceClient(connection)
 
-	request := &v1.UpdateUserRequest{
-		Id:         createdUser.GetUser().GetId(),
-		Email:      &email,
-		LastName:   &lastName,
-		FirstName:  &firstName,
-		MiddleName: &middleName,
-	}
+		authRequest := &v1.LoginRequest{
+			Email:    user.Email,
+			Password: user.Password,
+		}
 
-	authorizationMetadata := metadata.Pairs(
-		"authorization",
-		"Bearer "+loginResponse.GetToken().GetAccessToken(),
-	)
+		loginResponse, err := authenticationClient.Login(
+			context.Background(),
+			authRequest,
+		)
 
-	contextWithToken := metadata.NewOutgoingContext(
-		context.Background(),
-		authorizationMetadata,
-	)
+		require.NoError(cfg.T(), err)
+		require.NotNil(cfg.T(), loginResponse)
+		require.NotNil(cfg.T(), loginResponse.GetToken())
+		require.NotEmpty(
+			cfg.T(),
+			loginResponse.GetToken().GetAccessToken(),
+		)
 
-	response, err := usersClient.UpdateUser(
-		contextWithToken,
-		request,
-	)
+		update := builder.UserUpdate()
+		updateRequest := update.GRPCRequest(createdUser.GetUser().GetId())
 
-	require.NoError(t, err)
-	require.NotNil(t, response)
-	require.NotNil(t, response.GetUser())
+		authorizationMetadata := metadata.Pairs(
+			"authorization",
+			"Bearer "+loginResponse.GetToken().GetAccessToken(),
+		)
 
-	assert.Equal(t, createdUser.GetUser().GetId(), response.GetUser().GetId())
-	assert.Equal(t, request.GetEmail(), response.GetUser().GetEmail())
-	assert.Equal(t, request.GetLastName(), response.GetUser().GetLastName())
-	assert.Equal(t, request.GetFirstName(), response.GetUser().GetFirstName())
-	assert.Equal(t, request.GetMiddleName(), response.GetUser().GetMiddleName())
+		contextWithToken := metadata.NewOutgoingContext(
+			context.Background(),
+			authorizationMetadata,
+		)
 
-	t.Logf("updated user with ID %s", response.GetUser().GetId())
+		response, err := usersClient.UpdateUser(
+			contextWithToken,
+			updateRequest,
+		)
+
+		require.NoError(cfg.T(), err)
+		require.NotNil(cfg.T(), response)
+		require.NotNil(cfg.T(), response.GetUser())
+
+		assert.Equal(cfg.T(), createdUser.GetUser().GetId(), response.GetUser().GetId())
+		assert.Equal(cfg.T(), updateRequest.GetEmail(), response.GetUser().GetEmail())
+		assert.Equal(cfg.T(), updateRequest.GetLastName(), response.GetUser().GetLastName())
+		assert.Equal(cfg.T(), updateRequest.GetFirstName(), response.GetUser().GetFirstName())
+		assert.Equal(cfg.T(), updateRequest.GetMiddleName(), response.GetUser().GetMiddleName())
+
+		cfg.T().Logf("updated user with ID %s", response.GetUser().GetId())
+	})
 }
 
-func TestGetUserMe(t *testing.T) {
-	userRequest := &v1.CreateUserRequest{
-		Email:      gofakeit.Email(),
-		Password:   gofakeit.Password(true, true, true, true, false, 12),
-		LastName:   gofakeit.LastName(),
-		FirstName:  gofakeit.FirstName(),
-		MiddleName: gofakeit.FirstName(),
-	}
-
-	connection, err := grpc.NewClient(
-		"localhost:9000",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	require.NoError(t, err)
-	defer connection.Close()
-
-	usersClient := v1.NewUsersServiceClient(connection)
-	authenticationClient := v1.NewAuthenticationServiceClient(connection)
-
-	createdUser, err := usersClient.CreateUser(context.Background(), userRequest)
-
-	require.NoError(t, err)
-	require.NotNil(t, createdUser)
-	require.NotNil(t, createdUser.GetUser())
-	require.NotEmpty(t, createdUser.GetUser().GetId())
-
-	authRequest := &v1.LoginRequest{
-		Email:    userRequest.GetEmail(),
-		Password: userRequest.GetPassword(),
-	}
-
-	loginResponse, err := authenticationClient.Login(context.Background(), authRequest)
-
-	require.NoError(t, err)
-	require.NotNil(t, loginResponse)
-	require.NotNil(t, loginResponse.GetToken())
-	require.NotEmpty(t, loginResponse.GetToken().GetAccessToken())
-
-	authorizationMetadata := metadata.Pairs(
-		"authorization",
-		"Bearer "+loginResponse.GetToken().GetAccessToken(),
+func (s *suite) TestGetUserMe() {
+	testCase := axiom.NewCase(
+		axiom.WithCaseName("get my user"),
 	)
 
-	contextWithToken := metadata.NewOutgoingContext(
-		context.Background(),
-		authorizationMetadata,
-	)
+	s.RunCase(testCase, func(cfg *axiom.Config) {
+		builder := builders.New(fake.New())
+		user := builder.UserCreate()
+		userRequest := user.GRPCRequest()
 
-	response, err := usersClient.GetMe(contextWithToken, &v1.Empty{})
+		connection, err := grpc.NewClient(
+			"localhost:9000",
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		)
+		require.NoError(cfg.T(), err)
+		defer connection.Close()
 
-	require.NoError(t, err)
-	require.NotNil(t, response)
-	require.NotNil(t, response.GetUser())
+		usersClient := v1.NewUsersServiceClient(connection)
+		authenticationClient := v1.NewAuthenticationServiceClient(connection)
 
-	assert.Equal(t, createdUser.GetUser().GetId(), response.GetUser().GetId())
-	assert.Equal(t, createdUser.GetUser().GetEmail(), response.GetUser().GetEmail())
-	assert.Equal(t, createdUser.GetUser().GetLastName(), response.GetUser().GetLastName())
-	assert.Equal(t, createdUser.GetUser().GetFirstName(), response.GetUser().GetFirstName())
-	assert.Equal(t, createdUser.GetUser().GetMiddleName(), response.GetUser().GetMiddleName())
+		createdUser, err := usersClient.CreateUser(context.Background(), userRequest)
 
-	t.Logf("received current user with ID %s", response.GetUser().GetId())
+		require.NoError(cfg.T(), err)
+		require.NotNil(cfg.T(), createdUser)
+		require.NotNil(cfg.T(), createdUser.GetUser())
+		require.NotEmpty(cfg.T(), createdUser.GetUser().GetId())
+
+		authRequest := &v1.LoginRequest{
+			Email:    userRequest.GetEmail(),
+			Password: userRequest.GetPassword(),
+		}
+
+		loginResponse, err := authenticationClient.Login(context.Background(), authRequest)
+
+		require.NoError(cfg.T(), err)
+		require.NotNil(cfg.T(), loginResponse)
+		require.NotNil(cfg.T(), loginResponse.GetToken())
+		require.NotEmpty(cfg.T(), loginResponse.GetToken().GetAccessToken())
+
+		authorizationMetadata := metadata.Pairs(
+			"authorization",
+			"Bearer "+loginResponse.GetToken().GetAccessToken(),
+		)
+
+		contextWithToken := metadata.NewOutgoingContext(
+			context.Background(),
+			authorizationMetadata,
+		)
+
+		response, err := usersClient.GetMe(contextWithToken, &v1.Empty{})
+
+		require.NoError(cfg.T(), err)
+		require.NotNil(cfg.T(), response)
+		require.NotNil(cfg.T(), response.GetUser())
+
+		assert.Equal(cfg.T(), createdUser.GetUser().GetId(), response.GetUser().GetId())
+		assert.Equal(cfg.T(), createdUser.GetUser().GetEmail(), response.GetUser().GetEmail())
+		assert.Equal(cfg.T(), createdUser.GetUser().GetLastName(), response.GetUser().GetLastName())
+		assert.Equal(cfg.T(), createdUser.GetUser().GetFirstName(), response.GetUser().GetFirstName())
+		assert.Equal(cfg.T(), createdUser.GetUser().GetMiddleName(), response.GetUser().GetMiddleName())
+
+		cfg.T().Logf("received current user with ID %s", response.GetUser().GetId())
+	})
 }
