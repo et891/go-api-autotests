@@ -6,6 +6,7 @@ import (
 	"github.com/Nikita-Filonov/axiom"
 	"github.com/et891/go-api-autotests/builders"
 	"github.com/et891/go-api-autotests/fake"
+	"github.com/et891/go-api-autotests/metadata"
 	"github.com/et891/go-api-autotests/models"
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +16,11 @@ import (
 func (s *suite) TestCreateUser() {
 	testCase := axiom.NewCase(
 		axiom.WithCaseName("create user"),
+		axiom.WithCaseMeta(
+			axiom.WithMetaTag(metadata.TagSmoke),
+			axiom.WithMetaStory(metadata.StoryCreateEntity),
+			axiom.WithMetaSeverity(axiom.SeverityBlocker),
+		),
 	)
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
@@ -50,6 +56,10 @@ func (s *suite) TestCreateUser() {
 func (s *suite) TestUpdateUser() {
 	testCase := axiom.NewCase(
 		axiom.WithCaseName("update user"),
+		axiom.WithCaseMeta(
+			axiom.WithMetaStory(metadata.StoryUpdateEntity),
+			axiom.WithMetaSeverity(axiom.SeverityCritical),
+		),
 	)
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
@@ -125,6 +135,11 @@ func (s *suite) TestUpdateUser() {
 func (s *suite) TestGetUserMe() {
 	testCase := axiom.NewCase(
 		axiom.WithCaseName("get my user"),
+		axiom.WithCaseMeta(
+			axiom.WithMetaStory(metadata.StoryGetEntity),
+			axiom.WithMetaSeverity(axiom.SeverityCritical),
+			axiom.WithMetaTag(metadata.TagSmoke),
+		),
 	)
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {

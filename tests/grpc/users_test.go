@@ -7,16 +7,22 @@ import (
 	"github.com/Nikita-Filonov/axiom"
 	"github.com/et891/go-api-autotests/builders"
 	"github.com/et891/go-api-autotests/fake"
+	"github.com/et891/go-api-autotests/metadata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
+	grpcmetadata "google.golang.org/grpc/metadata"
 )
 
 func (s *suite) TestCreateUser() {
 	testCase := axiom.NewCase(
 		axiom.WithCaseName("create user"),
+		axiom.WithCaseMeta(
+			axiom.WithMetaTag(metadata.TagSmoke),
+			axiom.WithMetaStory(metadata.StoryCreateEntity),
+			axiom.WithMetaSeverity(axiom.SeverityBlocker),
+		),
 	)
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
@@ -51,6 +57,10 @@ func (s *suite) TestCreateUser() {
 func (s *suite) TestUpdateUser() {
 	testCase := axiom.NewCase(
 		axiom.WithCaseName("update user"),
+		axiom.WithCaseMeta(
+			axiom.WithMetaStory(metadata.StoryUpdateEntity),
+			axiom.WithMetaSeverity(axiom.SeverityCritical),
+		),
 	)
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
@@ -101,12 +111,12 @@ func (s *suite) TestUpdateUser() {
 		update := builder.UserUpdate()
 		updateRequest := update.GRPCRequest(createdUser.GetUser().GetId())
 
-		authorizationMetadata := metadata.Pairs(
+		authorizationMetadata := grpcmetadata.Pairs(
 			"authorization",
 			"Bearer "+loginResponse.GetToken().GetAccessToken(),
 		)
 
-		contextWithToken := metadata.NewOutgoingContext(
+		contextWithToken := grpcmetadata.NewOutgoingContext(
 			context.Background(),
 			authorizationMetadata,
 		)
@@ -133,6 +143,11 @@ func (s *suite) TestUpdateUser() {
 func (s *suite) TestGetUserMe() {
 	testCase := axiom.NewCase(
 		axiom.WithCaseName("get my user"),
+		axiom.WithCaseMeta(
+			axiom.WithMetaStory(metadata.StoryGetEntity),
+			axiom.WithMetaSeverity(axiom.SeverityCritical),
+			axiom.WithMetaTag(metadata.TagSmoke),
+		),
 	)
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
@@ -169,12 +184,12 @@ func (s *suite) TestGetUserMe() {
 		require.NotNil(cfg.T(), loginResponse.GetToken())
 		require.NotEmpty(cfg.T(), loginResponse.GetToken().GetAccessToken())
 
-		authorizationMetadata := metadata.Pairs(
+		authorizationMetadata := grpcmetadata.Pairs(
 			"authorization",
 			"Bearer "+loginResponse.GetToken().GetAccessToken(),
 		)
 
-		contextWithToken := metadata.NewOutgoingContext(
+		contextWithToken := grpcmetadata.NewOutgoingContext(
 			context.Background(),
 			authorizationMetadata,
 		)
