@@ -11,7 +11,6 @@ import (
 	"github.com/et891/go-api-autotests/metadata"
 	"github.com/et891/go-api-autotests/models"
 	"github.com/et891/go-api-autotests/transport/httptransport"
-	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -130,61 +129,54 @@ func (s *suite) TestGetUserMe() {
 	)
 
 	s.RunCase(testCase, func(cfg *axiom.Config) {
+		settings, err := config.Load()
+		require.NoError(cfg.T(), err)
+
+		publicTransport := httptransport.NewPublic(cfg, settings.HTTP)
+		publicUsersClient := httpclients.NewUsersClient(publicTransport)
+		authenticationClient := httpclients.NewAuthenticationClient(publicTransport)
+
 		builder := builders.New(fake.New())
 		user := builder.UserCreate()
 		createUserRequest := user.HTTPRequest()
-		client := resty.New().
-			SetBaseURL("http://localhost:8000/api/v1")
 
-		var createdUser models.UserResponse
-
-		createUserResponse, err := client.
-			R().
-			SetBody(createUserRequest).
-			SetResult(&createdUser).
-			Post("/users")
+		createdUserResponse, err := publicUsersClient.Create(cfg.Context.Raw, createUserRequest)
 
 		require.NoError(cfg.T(), err)
-		require.NotNil(cfg.T(), createUserResponse)
-		require.Equal(cfg.T(), http.StatusOK, createUserResponse.StatusCode())
-		require.NotEmpty(cfg.T(), createdUser.User.ID)
+		require.Equal(cfg.T(), http.StatusOK, createdUserResponse.StatusCode)
+		require.NotEmpty(cfg.T(), createdUserResponse.Data.User.ID)
 
 		loginRequest := models.LoginRequest{
 			Email:    user.Email,
 			Password: user.Password,
 		}
 
-		var loginResult models.LoginResponse
-
-		loginResponse, err := client.
-			R().
-			SetBody(loginRequest).
-			SetResult(&loginResult).
-			Post("/authentication/login")
+		loginResponse, err := authenticationClient.Login(cfg.Context.Raw, loginRequest)
 
 		require.NoError(cfg.T(), err)
-		require.NotNil(cfg.T(), loginResponse)
-		require.Equal(cfg.T(), http.StatusOK, loginResponse.StatusCode())
-		require.NotEmpty(cfg.T(), loginResult.Token.AccessToken)
+		require.Equal(cfg.T(), http.StatusOK, loginResponse.StatusCode)
+		require.NotEmpty(cfg.T(), loginResponse.Data.Token.AccessToken)
 
-		var result models.UserResponse
+		privateTransport := httptransport.NewPrivate(
+			cfg,
+			settings.HTTP,
+			loginResponse.Data.Token.AccessToken,
+		)
+		privateUsersClient := httpclients.NewUsersClient(privateTransport)
 
-		response, err := client.
-			R().
-			SetHeader("Authorization", "Bearer "+loginResult.Token.AccessToken).
-			SetResult(&result).
-			Get("/users/me")
+		response, err := privateUsersClient.GetMe(
+			cfg.Context.Raw,
+		)
 
 		require.NoError(cfg.T(), err)
-		require.NotNil(cfg.T(), response)
-		require.Equal(cfg.T(), http.StatusOK, response.StatusCode())
+		require.Equal(cfg.T(), http.StatusOK, response.StatusCode)
 
-		assert.Equal(cfg.T(), createdUser.User.ID, result.User.ID)
-		assert.Equal(cfg.T(), createdUser.User.Email, result.User.Email)
-		assert.Equal(cfg.T(), createdUser.User.LastName, result.User.LastName)
-		assert.Equal(cfg.T(), createdUser.User.FirstName, result.User.FirstName)
-		assert.Equal(cfg.T(), createdUser.User.MiddleName, result.User.MiddleName)
+		assert.Equal(cfg.T(), createdUserResponse.Data.User.ID, response.Data.User.ID)
+		assert.Equal(cfg.T(), createdUserResponse.Data.User.Email, response.Data.User.Email)
+		assert.Equal(cfg.T(), createdUserResponse.Data.User.LastName, response.Data.User.LastName)
+		assert.Equal(cfg.T(), createdUserResponse.Data.User.FirstName, response.Data.User.FirstName)
+		assert.Equal(cfg.T(), createdUserResponse.Data.User.MiddleName, response.Data.User.MiddleName)
 
-		cfg.T().Logf("received current user with ID %s", result.User.ID)
+		cfg.T().Logf("received current user with ID %s", response.Data.User.ID)
 	})
 }
